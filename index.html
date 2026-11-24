@@ -1,0 +1,545 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>GHOST — Private Live Location</title>
+    <meta name="description" content="GHOST — Private, consent-based live location sharing." />
+    <meta property="og:title" content="GHOST — Private Live Location" />
+    <meta property="og:description" content="GHOST — Private, consent-based live location sharing." />
+    <meta property="og:type" content="website" />
+    <meta name="twitter:card" content="summary" />
+    <meta name="theme-color" content="#16A34A" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="GHOST" />
+    <link rel="manifest" href="./manifest.json" />
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='18' fill='%2316A34A'/%3E%3Cpath d='M32 14c-8.8 0-16 7.2-16 16 0 11 13.4 24.6 14.9 26.1a1.6 1.6 0 0 0 2.2 0C34.6 54.6 48 41 48 30c0-8.8-7.2-16-16-16z' fill='%23FFFFFF'/%3E%3Ccircle cx='32' cy='30' r='5.5' fill='%2315803D'/%3E%3C/svg%3E" />
+    <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'%3E%3Crect width='180' height='180' rx='44' fill='%2316A34A'/%3E%3Cpath d='M90 38c-22.1 0-40 17.9-40 40 0 27.6 33.4 61.7 37.2 65.5a4 4 0 0 0 5.6 0C96.6 139.7 130 105.6 130 78c0-22.1-17.9-40-40-40z' fill='%23FFFFFF'/%3E%3Ccircle cx='90' cy='78' r='14' fill='%2315803D'/%3E%3C/svg%3E" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Outfit:wght@600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div id="boot-screen" class="boot-screen" role="status" aria-live="polite" aria-label="Loading GHOST">
+      <div class="boot-backdrop" aria-hidden="true"></div>
+      <div class="boot-center">
+        <div class="boot-logo-glow" aria-hidden="true"></div>
+        <div class="boot-logo-card">
+          <svg class="boot-logo-icon" viewBox="0 0 48 48" fill="none" aria-hidden="true">
+            <rect width="48" height="48" rx="16" fill="#16A34A" />
+            <path d="M24 10c-6.6 0-12 5.4-12 12 0 8.3 10.1 18.5 11.2 19.6a1.2 1.2 0 0 0 1.6 0C25.9 40.5 36 30.3 36 22c0-6.6-5.4-12-12-12z" fill="#FFFFFF" />
+            <circle cx="24" cy="22" r="4.2" fill="#15803D" />
+          </svg>
+        </div>
+        <div class="boot-wordmark">GHOST</div>
+        <div class="boot-spinner" aria-hidden="true"></div>
+        <div class="boot-progress-track" aria-hidden="true"><div class="boot-progress-fill"></div></div>
+      </div>
+    </div>
+
+    <div id="app-shell" class="app-shell">
+      <header id="top-bar" class="top-bar">
+        <div class="top-bar-inner">
+          <a href="./index.html" id="brand-home-link" class="brand-mark" aria-label="GHOST Home">
+            <span class="brand-badge" aria-hidden="true">
+              <svg viewBox="0 0 32 32" fill="none">
+                <path d="M16 5.5c-4.7 0-8.5 3.8-8.5 8.5 0 5.9 7.1 13.1 7.9 13.9a.85.85 0 0 0 1.2 0c.8-.8 7.9-8 7.9-13.9 0-4.7-3.8-8.5-8.5-8.5z" fill="#FFFFFF" />
+                <circle cx="16" cy="14" r="3.1" fill="#15803D" />
+              </svg>
+            </span>
+            <span class="brand-name">GHOST</span>
+          </a>
+          <nav id="top-nav" class="top-nav hidden" aria-label="Primary Navigation">
+            <button type="button" class="nav-link is-active" data-nav="home">Home</button>
+            <button type="button" class="nav-link" data-nav="map">My Location</button>
+            <button type="button" class="nav-link" data-nav="settings">Settings</button>
+            <button type="button" id="nav-admin-btn" class="nav-link hidden" data-nav="admin">Admin</button>
+          </nav>
+          <div id="top-user-chip" class="top-user-chip hidden">
+            <span id="top-status-pill" class="status-tag is-off">
+              <span class="status-tag-dot" aria-hidden="true"></span>
+              <span id="top-status-text">Off</span>
+            </span>
+            <button type="button" id="top-profile-btn" class="user-avatar-btn" aria-label="Open Settings">
+              <span id="top-user-avatar" class="user-avatar-circle">G</span>
+              <span id="top-user-name" class="user-chip-name">User</span>
+            </button>
+          </div>
+        </div>
+      </header>
+
+      <div id="network-banner" class="network-banner hidden" role="alert" aria-live="assertive">
+        <div class="network-banner-inner">
+          <div><strong>Connection lost</strong><span> — Reconnecting automatically...</span></div>
+          <span id="network-banner-detail" class="tabular-nums"></span>
+        </div>
+      </div>
+
+      <main class="main-stage">
+        <section id="view-auth" class="auth-stage hidden" aria-label="GHOST Authentication">
+          <div class="surface-card auth-card">
+            <div class="auth-brand-header">
+              <span class="brand-badge brand-badge-lg" aria-hidden="true">
+                <svg viewBox="0 0 32 32" fill="none">
+                  <path d="M16 5.5c-4.7 0-8.5 3.8-8.5 8.5 0 5.9 7.1 13.1 7.9 13.9a.85.85 0 0 0 1.2 0c.8-.8 7.9-8 7.9-13.9 0-4.7-3.8-8.5-8.5-8.5z" fill="#FFFFFF" />
+                  <circle cx="16" cy="14" r="3.1" fill="#15803D" />
+                </svg>
+              </span>
+              <span class="auth-brand-title">GHOST</span>
+            </div>
+
+            <div id="auth-panel-login" class="auth-panel">
+              <h1 class="auth-heading">Welcome back</h1>
+              <p class="auth-subtitle">Sign in to continue</p>
+              <form id="form-login" class="form-stack" novalidate>
+                <div class="field-group">
+                  <label class="field-label" for="login-username">Username</label>
+                  <input id="login-username" class="field-input" type="text" autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="Enter username" required />
+                </div>
+                <div class="field-group">
+                  <label class="field-label" for="login-password">Password</label>
+                  <div class="password-field-wrap">
+                    <input id="login-password" class="field-input has-trailing-btn" type="password" autocomplete="current-password" placeholder="Enter password" required />
+                    <button type="button" class="password-eye-btn" data-toggle-password="login-password" aria-label="Show password" aria-pressed="false">
+                      <svg class="icon-eye" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z" /><circle cx="12" cy="12" r="3" /></svg>
+                      <svg class="icon-eye-off hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24" /><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c6.5 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68" /><path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3.5 7 10 7a9.74 9.74 0 0 0 5.39-1.61" /><line x1="2" y1="2" x2="22" y2="22" /></svg>
+                    </button>
+                  </div>
+                </div>
+                <button type="submit" id="login-submit-btn" class="btn btn-primary btn-full">Log In</button>
+              </form>
+              <div class="auth-switch-row">
+                <button type="button" id="go-register-btn" class="auth-switch-link">Don't have an account? <span>Create account</span></button>
+              </div>
+            </div>
+
+            <div id="auth-panel-register" class="auth-panel hidden">
+              <h1 class="auth-heading">Create account</h1>
+              <p class="auth-subtitle">Choose a username and password</p>
+              <form id="form-register" class="form-stack" novalidate>
+                <div class="field-group">
+                  <label class="field-label" for="reg-username">Username</label>
+                  <input id="reg-username" class="field-input" type="text" autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="4–24 letters, numbers, or _" minlength="4" maxlength="24" required />
+                </div>
+                <div class="field-group">
+                  <label class="field-label" for="reg-password">Password</label>
+                  <div class="password-field-wrap">
+                    <input id="reg-password" class="field-input has-trailing-btn" type="password" autocomplete="new-password" placeholder="At least 6 characters" minlength="6" required />
+                    <button type="button" class="password-eye-btn" data-toggle-password="reg-password" aria-label="Show password" aria-pressed="false">
+                      <svg class="icon-eye" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z" /><circle cx="12" cy="12" r="3" /></svg>
+                      <svg class="icon-eye-off hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24" /><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c6.5 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68" /><path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3.5 7 10 7a9.74 9.74 0 0 0 5.39-1.61" /><line x1="2" y1="2" x2="22" y2="22" /></svg>
+                    </button>
+                  </div>
+                </div>
+                <div class="field-group">
+                  <label class="field-label" for="reg-confirm-password">Confirm Password</label>
+                  <div class="password-field-wrap">
+                    <input id="reg-confirm-password" class="field-input has-trailing-btn" type="password" autocomplete="new-password" placeholder="Re-enter password" minlength="6" required />
+                    <button type="button" class="password-eye-btn" data-toggle-password="reg-confirm-password" aria-label="Show confirm password" aria-pressed="false">
+                      <svg class="icon-eye" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z" /><circle cx="12" cy="12" r="3" /></svg>
+                      <svg class="icon-eye-off hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24" /><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c6.5 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68" /><path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3.5 7 10 7a9.74 9.74 0 0 0 5.39-1.61" /><line x1="2" y1="2" x2="22" y2="22" /></svg>
+                    </button>
+                  </div>
+                </div>
+                <button type="submit" id="register-submit-btn" class="btn btn-primary btn-full">Create Account</button>
+              </form>
+              <div class="auth-switch-row">
+                <button type="button" id="go-login-btn" class="auth-switch-link">Already have an account? <span>Sign in</span></button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section id="view-dashboard" class="view-section hidden" data-subview="home" aria-label="GHOST Dashboard">
+          <div id="dashboard-top-card" class="dashboard-greeting-strip">
+            <div class="greeting-identity">
+              <div id="owner-avatar-badge" class="avatar-circle">G</div>
+              <div>
+                <div id="owner-greeting" class="greeting-name">User</div>
+                <div class="greeting-sub">GHOST Private Location</div>
+              </div>
+            </div>
+            <div id="owner-status-pill" class="status-tag is-off">
+              <span class="status-tag-dot" aria-hidden="true"></span>
+              <span id="owner-status-text">Location sharing is off</span>
+            </div>
+          </div>
+
+          <div class="workspace-grid">
+            <div class="panel-stack dashboard-controls-col">
+              <div id="owner-status-card" class="surface-card stagger-card">
+                <div class="location-hero-head">
+                  <div id="owner-hero-icon" class="hero-icon-circle is-off" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-6.2-7-11.5a7 7 0 1 1 14 0C19 14.8 12 21 12 21z" /><circle cx="12" cy="9.5" r="2.5" /></svg>
+                  </div>
+                  <div>
+                    <h1 id="owner-status-heading" class="card-heading">Location sharing is off</h1>
+                    <p id="owner-status-desc" class="muted-copy">Your location stays private until you start sharing.</p>
+                  </div>
+                </div>
+
+                <div id="owner-error-box" class="inline-alert inline-alert-error hidden" role="alert"></div>
+
+                <div id="owner-telemetry-section" class="hidden">
+                  <div class="telemetry-divider"></div>
+                  <div class="telemetry-grid">
+                    <div class="telemetry-tile telemetry-tile-wide">
+                      <span class="telemetry-label">Current area</span>
+                      <span id="owner-area-text" class="telemetry-value">Locating area...</span>
+                    </div>
+                    <div class="telemetry-tile">
+                      <span class="telemetry-label">Accuracy</span>
+                      <span id="owner-accuracy-text" class="telemetry-value tabular-nums">—</span>
+                    </div>
+                    <div class="telemetry-tile">
+                      <span class="telemetry-label">Last update</span>
+                      <span id="owner-updated-text" class="telemetry-value tabular-nums">—</span>
+                    </div>
+                    <div class="telemetry-tile">
+                      <span class="telemetry-label">Duration</span>
+                      <span id="owner-duration-text" class="telemetry-value tabular-nums">00:00</span>
+                    </div>
+                    <div class="telemetry-tile">
+                      <span class="telemetry-label">Expires</span>
+                      <span id="owner-expires-text" class="telemetry-value tabular-nums">—</span>
+                    </div>
+                  </div>
+                  <div id="owner-accuracy-warning" class="inline-alert inline-alert-warn hidden" style="margin-top:12px">
+                    GPS accuracy is currently low. Moving near an open window or outdoors improves precision.
+                  </div>
+                </div>
+
+                <div class="dashboard-actions">
+                  <button type="button" id="btn-start-sharing" class="btn btn-primary btn-full">START SHARING</button>
+                  <button type="button" id="btn-open-shared-link" class="btn btn-secondary btn-full">Open a Shared Link</button>
+                  <button type="button" id="btn-stop-sharing" class="btn btn-danger btn-full hidden">STOP SHARING</button>
+                </div>
+              </div>
+
+              <div id="owner-link-card" class="surface-card stagger-card hidden">
+                <div class="card-header-row">
+                  <h2 class="section-title">Private Live Link</h2>
+                  <span class="status-tag is-live"><span class="status-tag-dot" aria-hidden="true"></span>Active</span>
+                </div>
+                <p class="muted-copy" style="margin:6px 0 12px">Share this private link with someone you trust. Access ends immediately when you stop sharing.</p>
+                <div id="owner-share-url" class="share-url-box"></div>
+                <div class="two-col-actions">
+                  <button type="button" id="btn-copy-link" class="btn btn-primary">COPY LINK</button>
+                  <button type="button" id="btn-share-link" class="btn btn-secondary">SHARE LINK</button>
+                </div>
+              </div>
+
+              <div id="pwa-install-card" class="surface-card pwa-install-card hidden" role="region" aria-label="Install GHOST">
+                <div>
+                  <strong class="pwa-title">Install GHOST App</strong>
+                  <span class="muted-copy">Add GHOST to your home screen for quick one-tap access.</span>
+                </div>
+                <div class="pwa-actions">
+                  <button type="button" id="btn-pwa-install" class="btn btn-primary btn-sm">Install</button>
+                  <button type="button" id="btn-pwa-dismiss" class="btn btn-ghost btn-sm">Dismiss</button>
+                </div>
+              </div>
+            </div>
+
+            <div id="owner-map-card" class="surface-card map-card stagger-card">
+              <div class="map-toolbar">
+                <div>
+                  <div class="map-toolbar-title">Live Map</div>
+                  <div id="owner-map-coords" class="meta-line tabular-nums">No active stream</div>
+                </div>
+                <div class="map-toolbar-actions">
+                  <button type="button" id="owner-map-toggle-share-btn" class="btn btn-primary btn-sm hidden">Start Sharing</button>
+                  <button type="button" id="owner-recenter-btn" class="btn btn-secondary btn-sm hidden">Recenter</button>
+                </div>
+              </div>
+              <div class="map-viewport">
+                <div id="owner-map-canvas" class="map-canvas" data-testid="owner-map"></div>
+                <div id="owner-map-type-switcher" class="map-type-switcher" role="group" aria-label="Map view">
+                  <button type="button" class="map-type-btn is-active" data-map-target="owner" data-map-type="satellite" aria-pressed="true">Satellite</button>
+                  <button type="button" class="map-type-btn" data-map-target="owner" data-map-type="street" aria-pressed="false">Street</button>
+                  <button type="button" class="map-type-btn" data-map-target="owner" data-map-type="terrain" aria-pressed="false">Terrain</button>
+                </div>
+                <div id="owner-map-empty" class="map-empty-overlay">
+                  <div class="empty-map-pin" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-6.2-7-11.5a7 7 0 1 1 14 0C19 14.8 12 21 12 21z" /><circle cx="12" cy="9.5" r="2.5" /></svg>
+                  </div>
+                  <h3 class="section-title">Location is private</h3>
+                  <p class="muted-copy" style="max-width:300px;margin-top:6px">Tap <strong>START SHARING</strong> to allow GPS access and preview your live position here.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section id="view-settings" class="view-section hidden" aria-label="GHOST Settings">
+          <div class="settings-container">
+            <div class="page-head">
+              <h1 class="page-title">Settings</h1>
+              <p class="muted-copy">Manage your GHOST account, sharing preferences, and notifications.</p>
+            </div>
+            <div class="settings-grid">
+              <div class="surface-card">
+                <h2 class="section-title">Account</h2>
+                <form id="form-settings-account" class="form-stack" style="margin-top:14px" novalidate>
+                  <div class="field-group">
+                    <label class="field-label" for="settings-username">Username</label>
+                    <input id="settings-username" class="field-input" type="text" minlength="4" maxlength="24" autocapitalize="none" spellcheck="false" required />
+                  </div>
+                  <div class="telemetry-rows settings-info-list">
+                    <div class="telemetry-row"><span class="telemetry-label">Sharing status</span><span id="settings-sharing-status" class="telemetry-value">Off</span></div>
+                    <div class="telemetry-row"><span class="telemetry-label">Location permission</span><span id="settings-perm-text" class="telemetry-value">Unknown</span></div>
+                    <div class="telemetry-row"><span class="telemetry-label">Member since</span><span id="settings-member-since" class="telemetry-value tabular-nums">—</span></div>
+                  </div>
+                  <button type="submit" id="settings-save-account-btn" class="btn btn-primary btn-full">Update Username</button>
+                </form>
+              </div>
+              <div class="surface-card">
+                <h2 class="section-title">Sharing &amp; Notifications</h2>
+                <form id="form-settings-prefs" class="form-stack" style="margin-top:14px" novalidate>
+                  <div class="field-group">
+                    <label class="field-label" for="settings-default-exp">Default link expiration</label>
+                    <select id="settings-default-exp" class="field-select">
+                      <option value="1h">1 hour</option>
+                      <option value="6h">6 hours</option>
+                      <option value="24h">24 hours</option>
+                      <option value="until_stopped">Until I stop sharing</option>
+                    </select>
+                  </div>
+                  <label class="toggle-row" for="settings-notifications-toggle">
+                    <span>
+                      <strong class="toggle-title">In-app notifications</strong>
+                      <span class="toggle-sub">Show alerts for link updates and sharing status</span>
+                    </span>
+                    <input id="settings-notifications-toggle" type="checkbox" class="toggle-input" checked />
+                  </label>
+                  <button type="submit" id="settings-save-prefs-btn" class="btn btn-primary btn-full">Save Preferences</button>
+                </form>
+                <div class="telemetry-divider"></div>
+                <div id="settings-pwa-install-row" class="hidden" style="margin-bottom:12px">
+                  <button type="button" id="settings-pwa-install-btn" class="btn btn-secondary btn-full">Install GHOST App</button>
+                </div>
+                <div id="settings-pwa-ios-note" class="inline-alert inline-alert-info hidden" style="margin-bottom:12px">
+                  On iPhone or iPad Safari, tap <strong>Share</strong> then <strong>Add to Home Screen</strong> to install GHOST.
+                </div>
+                <button type="button" id="btn-settings-logout" class="btn btn-danger btn-full">Log Out</button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section id="view-viewer" class="view-section hidden" aria-label="GHOST Live Location Viewer">
+          <div class="workspace-grid">
+            <div class="panel-stack">
+              <div id="viewer-skeleton" class="surface-card hidden">
+                <div class="skeleton" style="height:20px;width:42%;margin-bottom:14px"></div>
+                <div class="skeleton" style="height:30px;width:72%;margin-bottom:12px"></div>
+                <div class="skeleton" style="height:16px;width:58%;margin-bottom:20px"></div>
+                <div class="skeleton" style="height:46px;width:100%"></div>
+              </div>
+
+              <div id="viewer-terminal-card" class="surface-card hidden">
+                <span class="status-tag is-ended"><span class="status-tag-dot" aria-hidden="true"></span><span id="viewer-terminal-badge">Ended</span></span>
+                <h1 id="viewer-terminal-title" class="card-heading" style="margin-top:12px">Sharing Ended</h1>
+                <p id="viewer-terminal-message" class="muted-copy" style="margin:6px 0 18px"></p>
+                <div class="two-col-actions">
+                  <button type="button" id="viewer-back-home-btn" class="btn btn-primary">Go to GHOST</button>
+                  <button type="button" id="viewer-try-another-btn" class="btn btn-secondary">Open Link</button>
+                </div>
+              </div>
+
+              <div id="viewer-active-card" class="surface-card hidden">
+                <div class="card-header-row">
+                  <span id="viewer-live-indicator" class="status-tag is-live"><span class="status-tag-dot" aria-hidden="true"></span><span id="viewer-live-badge-text">LIVE</span></span>
+                  <button type="button" id="viewer-exit-btn" class="btn btn-ghost btn-sm">Close</button>
+                </div>
+                <h1 id="viewer-person-name" class="card-heading" style="margin-top:12px">Shared User</h1>
+                <div id="viewer-place-primary" class="viewer-place-title">Locating area...</div>
+                <div id="viewer-place-secondary" class="muted-copy"></div>
+                <div class="telemetry-divider"></div>
+                <div class="telemetry-rows">
+                  <div class="telemetry-row"><span class="telemetry-label">GPS accuracy</span><span id="viewer-accuracy-text" class="telemetry-value tabular-nums">—</span></div>
+                  <div class="telemetry-row"><span class="telemetry-label">Last updated</span><span id="viewer-updated-text" class="telemetry-value tabular-nums">—</span></div>
+                  <div class="telemetry-row"><span class="telemetry-label">Link expires</span><span id="viewer-expires-text" class="telemetry-value tabular-nums">—</span></div>
+                </div>
+                <div id="viewer-accuracy-warn" class="inline-alert inline-alert-warn hidden" style="margin-top:12px">
+                  Location accuracy is low. Approximate area shown inside the GPS radius.
+                </div>
+                <div id="viewer-distance-card" class="distance-readout hidden">
+                  <div id="viewer-distance-text" class="distance-primary tabular-nums">—</div>
+                  <div id="viewer-route-eta" class="muted-copy"></div>
+                </div>
+                <div id="viewer-route-error" class="inline-alert inline-alert-warn hidden" style="margin-top:10px"></div>
+                <div class="dashboard-actions">
+                  <button type="button" id="btn-meet-me" class="btn btn-primary btn-full">Meet Me / Directions</button>
+                  <button type="button" id="btn-use-my-location" class="btn btn-secondary btn-full">Use My Location</button>
+                  <div id="viewer-route-controls" class="hidden">
+                    <div class="route-mode-bar" role="group" aria-label="Travel mode">
+                      <button type="button" id="route-mode-driving" class="btn btn-primary btn-sm">Driving</button>
+                      <button type="button" id="route-mode-walking" class="btn btn-secondary btn-sm">Walking</button>
+                    </div>
+                  </div>
+                  <a id="btn-open-external-maps" class="btn btn-ghost btn-full hidden" target="_blank" rel="noopener noreferrer">Open in External Maps</a>
+                </div>
+              </div>
+            </div>
+
+            <div class="surface-card map-card">
+              <div class="map-toolbar">
+                <div>
+                  <div class="map-toolbar-title">Live Tracking Map</div>
+                  <div id="viewer-map-status" class="meta-line tabular-nums">Connecting...</div>
+                </div>
+                <div class="map-toolbar-actions">
+                  <button type="button" id="viewer-recenter-btn" class="btn btn-secondary btn-sm hidden">Recenter</button>
+                  <button type="button" id="viewer-fit-both-btn" class="btn btn-secondary btn-sm hidden">Fit Both</button>
+                </div>
+              </div>
+              <div class="map-viewport viewer-map-viewport">
+                <div id="viewer-map-canvas" class="map-canvas" data-testid="viewer-map"></div>
+                <div id="viewer-map-type-switcher" class="map-type-switcher" role="group" aria-label="Map view">
+                  <button type="button" class="map-type-btn is-active" data-map-target="viewer" data-map-type="satellite" aria-pressed="true">Satellite</button>
+                  <button type="button" class="map-type-btn" data-map-target="viewer" data-map-type="street" aria-pressed="false">Street</button>
+                  <button type="button" class="map-type-btn" data-map-target="viewer" data-map-type="terrain" aria-pressed="false">Terrain</button>
+                </div>
+                <div id="viewer-map-empty" class="map-empty-overlay hidden">
+                  <h3 class="section-title">Map unavailable</h3>
+                  <p id="viewer-map-empty-text" class="muted-copy" style="margin-top:6px">Waiting for active live coordinates.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section id="view-admin" class="view-section hidden" aria-label="GHOST Admin Panel">
+          <div class="surface-card">
+            <div class="admin-header">
+              <div>
+                <h1 class="page-title">Admin Overview</h1>
+                <p class="muted-copy">Registered accounts and active sharing status. Private coordinates and passwords are never exposed.</p>
+              </div>
+              <button type="button" id="admin-refresh-btn" class="btn btn-secondary btn-sm">Refresh</button>
+            </div>
+            <div id="admin-error-box" class="inline-alert inline-alert-error hidden" role="alert" style="margin-bottom:16px"></div>
+            <div class="stats-grid">
+              <div class="stat-card"><div class="stat-label">Total Accounts</div><div id="stat-total-accounts" class="stat-value tabular-nums">—</div></div>
+              <div class="stat-card"><div class="stat-label">Active Sessions</div><div id="stat-active-sessions" class="stat-value tabular-nums">—</div></div>
+              <div class="stat-card"><div class="stat-label">Currently Sharing</div><div id="stat-active-sharers" class="stat-value tabular-nums">—</div></div>
+              <div class="stat-card"><div class="stat-label">Not Sharing</div><div id="stat-not-sharing" class="stat-value tabular-nums">—</div></div>
+            </div>
+            <div class="table-scroll admin-desktop-table">
+              <table class="admin-table">
+                <thead>
+                  <tr><th>Username</th><th>Status</th><th>Sharing</th><th>Registered</th><th>Last Seen</th><th>Actions</th></tr>
+                </thead>
+                <tbody id="admin-users-tbody"><tr><td colspan="6" class="muted-copy">Loading accounts...</td></tr></tbody>
+              </table>
+            </div>
+            <div id="admin-users-cards" class="admin-mobile-cards"></div>
+          </div>
+        </section>
+      </main>
+
+      <nav id="mobile-bottom-nav" class="mobile-bottom-nav hidden" aria-label="Mobile Navigation">
+        <button type="button" class="bottom-nav-item is-active" data-nav="home">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z" /></svg>
+          <span>Home</span>
+        </button>
+        <button type="button" class="bottom-nav-item" data-nav="map">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-7-6.2-7-11.5a7 7 0 1 1 14 0C19 14.8 12 21 12 21z" /><circle cx="12" cy="9.5" r="2.5" /></svg>
+          <span>My Location</span>
+        </button>
+        <button type="button" class="bottom-nav-item" data-nav="settings">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h.01a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v.01a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" /></svg>
+          <span>Settings</span>
+        </button>
+        <button type="button" id="bottom-nav-admin-btn" class="bottom-nav-item hidden" data-nav="admin">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2 4 5v6c0 5 3.4 9.7 8 11 4.6-1.3 8-6 8-11V5l-8-3z" /></svg>
+          <span>Admin</span>
+        </button>
+      </nav>
+
+      <footer class="app-footer">
+        <div class="app-footer-inner"><span>Created by GhostAK</span></div>
+      </footer>
+    </div>
+
+    <div id="modal-start-sharing" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="modal-share-title">
+      <div class="modal-panel">
+        <div class="modal-header">
+          <h2 id="modal-share-title" class="section-title">Share Live Location</h2>
+          <button type="button" class="btn btn-ghost btn-sm" data-close-modal="modal-start-sharing" aria-label="Close">Close</button>
+        </div>
+        <p class="muted-copy" style="margin-bottom:14px">GHOST requests your device GPS permission to share your real-time position. Sharing begins only after a valid GPS fix is received, and you can stop at any time.</p>
+        <div class="field-group">
+          <label class="field-label" for="share-expiration-select">Link expiration</label>
+          <select id="share-expiration-select" class="field-select">
+            <option value="1h">1 hour</option>
+            <option value="6h">6 hours</option>
+            <option value="24h">24 hours</option>
+            <option value="until_stopped" selected>Until I stop sharing</option>
+          </select>
+        </div>
+        <div class="modal-actions modal-actions-row">
+          <button type="button" class="btn btn-secondary" data-close-modal="modal-start-sharing">Cancel</button>
+          <button type="button" id="confirm-start-sharing-btn" class="btn btn-primary">Allow &amp; Start</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="modal-confirm" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="confirm-modal-title">
+      <div class="modal-panel">
+        <div class="modal-header">
+          <h2 id="confirm-modal-title" class="section-title">Confirm Action</h2>
+          <button type="button" class="btn btn-ghost btn-sm" id="confirm-modal-close-x" aria-label="Close">Close</button>
+        </div>
+        <p id="confirm-modal-message" class="muted-copy"></p>
+        <div class="modal-actions modal-actions-row">
+          <button type="button" id="confirm-modal-cancel-btn" class="btn btn-secondary">Cancel</button>
+          <button type="button" id="confirm-modal-ok-btn" class="btn btn-danger">Confirm</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="modal-viewer-permission" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="modal-viewer-perm-title">
+      <div class="modal-panel">
+        <div class="modal-header">
+          <h2 id="modal-viewer-perm-title" class="section-title">Use Your Location</h2>
+          <button type="button" class="btn btn-ghost btn-sm" data-close-modal="modal-viewer-permission" aria-label="Close">Close</button>
+        </div>
+        <p class="muted-copy">Allow location access to measure how far away you are and display a route or distance line to meet up.</p>
+        <div class="modal-actions modal-actions-row">
+          <button type="button" class="btn btn-secondary" data-close-modal="modal-viewer-permission">Not Now</button>
+          <button type="button" id="confirm-viewer-location-btn" class="btn btn-primary">Allow Location</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="modal-open-link" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="modal-open-link-title">
+      <div class="modal-panel">
+        <div class="modal-header">
+          <h2 id="modal-open-link-title" class="section-title">Open Shared Link</h2>
+          <button type="button" class="btn btn-ghost btn-sm" data-close-modal="modal-open-link" aria-label="Close">Close</button>
+        </div>
+        <form id="form-open-link" class="form-stack" novalidate>
+          <div class="field-group">
+            <label class="field-label" for="input-live-link">Live link or token</label>
+            <input id="input-live-link" class="field-input" type="text" placeholder="Paste https://...?live=... link" required />
+          </div>
+          <div class="modal-actions modal-actions-row">
+            <button type="button" class="btn btn-secondary" data-close-modal="modal-open-link">Cancel</button>
+            <button type="submit" class="btn btn-primary">View Location</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <div id="toast-region" class="toast-region" aria-live="polite" aria-atomic="true"></div>
+    <script defer src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script defer src="./app.js"></script>
+  </body>
+</html>
